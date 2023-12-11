@@ -1,22 +1,70 @@
 import './App.css'
-import responseMovies from './mocks/with-results.json'
 import { Movies } from './components/Movie'
+import { useMovies } from './hooks/useMovies.js'
+import { useState, useEffect, useRef } from 'react'
 
+function useSearch() {
+  const [ error, setError ] = useState(null)
+  const [ search, updateSearch ] = useState('')
+  const isFirstInput = useRef(true)
+
+  useEffect(() => {
+    if (isFirstInput.current) {
+      isFirstInput.current = search === ''
+      return
+    }
+    if (search === ''){
+      setError('No se puede buscar una pelicula vacia')
+      return
+    }
+    if (search.match(/^\d+$/)) {
+      setError('No se puede buscar una pelicula con un numero')
+      return
+    }
+    if (search.length < 3) {
+      setError('la busqueda debe tener al menos 3 caracteres')
+      return
+    }
+    setError(null)
+  },[search])
+  return { search,updateSearch,error}
+}
 function App() {
+  const { error, updateSearch, search } = useSearch()
+  const { movies,loading , getMovies } = useMovies({search})
 
-  const movies = responseMovies.Search
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    getMovies()
+  }
+  const handleChange = (event) => {
+    updateSearch(event.target.value)
+  }
 
   return (
     <div className='page'>
       <header className="App-header">
         <h1>Buscador de peliculas</h1>
-        <form className='form'>
-          <input type="text" placeholder='Buscar pelicula....' />
+        <form className='form' onSubmit={handleSubmit}>
+          <input
+            style={{
+              border:'1px solid transparent',
+              borderColor: error ? 'red' : 'transparent'
+            }}
+            onChange={handleChange}
+            name='query'
+            type="text" 
+            value={search}
+            placeholder='Buscar pelicula....' 
+          />
           <button type="submit">Search</button>
         </form>
+        {error && <p style={{color:'red'}}>{error}</p>}
       </header>
       <main>
-        <Movies movies={movies} />
+        {
+          loading ? <p>Cargando ... </p> : <Movies movies={ movies } />
+        }
       </main>
     </div>
   )
