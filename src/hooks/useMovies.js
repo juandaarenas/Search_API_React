@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import { searchMovies } from '../services/movies.js'
 
 export function useMovies ({search, sort}) {
@@ -7,21 +7,24 @@ export function useMovies ({search, sort}) {
     const [ error, setError ] = useState(null)
     const previousSearch = useRef(search)
     
-    const getMovies = useMemo (() => {
-        return async ({search}) => {
-            if (search === previousSearch.current) return
-            try {
-                setLoading(true)
-                setError(null)
-                previousSearch.current = search
-                const newMovies = await searchMovies({search})
-                setMovies(newMovies)
-            } catch (e) {
-                setError(e.message)
-            } finally {
-                setLoading(false)
-            }
+    //useCallback : es muy parecido al useMemo permitiendo devolver funciones,
+    // la diferencia es que esta es usada especificamente para las funciones y el
+    // useMemo para cualquier otra cosa ya sea valores entre otros.
+    const getMovies = useCallback (async ({search}) => {
+        
+        if (search === previousSearch.current) return
+        try {
+            setLoading(true)
+            setError(null)
+            previousSearch.current = search
+            const newMovies = await searchMovies({search})
+            setMovies(newMovies)
+        } catch (e) {
+            setError(e.message)
+        } finally {
+            setLoading(false)
         }
+        
         
     }, [])
 
